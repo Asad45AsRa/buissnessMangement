@@ -1,0 +1,32 @@
+{
+  "name": "al-fatah-spray-center",
+  "version": "1.0.0",
+  "description": "Complete Business Management System",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-builder"
+  },
+  "keywords": [],
+  "author": "AL Fatah",
+  "license": "ISC",
+  "devDependencies": {
+    "electron": "27.0.0",
+    "electron-builder": "24.13.3"
+  },
+  "build": {
+    "appId": "com.alfatah.spraycenter",
+    "productName": "AL Fatah Spray Center",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "main.js",
+      "renderer/**/*"
+    ],
+    "win": {
+      "target": "nsis"
+    },
+    "electronVersion": "27.0.0"
+  }
+}

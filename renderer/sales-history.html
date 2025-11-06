@@ -1,0 +1,794 @@
+<!DOCTYPE html>
+<html id="mainHtml">
+<head>
+    <meta charset="UTF-8">
+    <title>Sales History</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, sans-serif; background: #f5f5f5; }
+        .navbar {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+        }
+        .navbar h1 { font-size: 24px; }
+        .navbar button {
+            background: white;
+            color: #667eea;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        .container { max-width: 1600px; margin: 20px auto; padding: 20px; }
+        .search-section {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .search-section h2 {
+            color: #667eea;
+            margin-bottom: 20px;
+            font-size: 20px;
+            border-bottom: 3px solid #667eea;
+            padding-bottom: 10px;
+        }
+        .search-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+        input, select {
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 15px;
+        }
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 15px;
+            transition: all 0.3s;
+            font-weight: 600;
+        }
+        button:hover { 
+            transform: translateY(-2px); 
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+        .search-btn {
+            background: linear-gradient(135deg, #2196f3 0%, #1976d2 100%);
+            width: 100%;
+        }
+        .clear-btn {
+            background: linear-gradient(135deg, #f44336 0%, #d32f2f 100%);
+            width: 100%;
+        }
+        .stats-section {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .stat-box {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        .stat-box h3 { font-size: 14px; margin-bottom: 10px; opacity: 0.9; }
+        .stat-box p { font-size: 28px; font-weight: bold; }
+        .history-table {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            padding: 15px;
+            text-align: center;
+            border-bottom: 1px solid #ddd;
+        }
+        th { 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            font-size: 14px;
+        }
+        td { font-size: 14px; }
+        tbody tr:hover { background: #f5f5f5; }
+        .return-btn { 
+            background: #ff9800; 
+            padding: 8px 16px; 
+            font-size: 13px;
+        }
+        .returned-btn { 
+            background: #4caf50; 
+            padding: 8px 16px; 
+            font-size: 13px; 
+            cursor: not-allowed;
+            opacity: 0.7;
+        }
+        .returned-row {
+            background: #ffebee;
+            opacity: 0.6;
+        }
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: #999;
+            font-style: italic;
+        }
+        .delete-badge {
+            background: #e74c3c;
+            color: white;
+            padding: 3px 8px;
+            border-radius: 3px;
+            font-size: 11px;
+            margin-left: 5px;
+        }
+
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 2000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.6);
+            animation: fadeIn 0.3s;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        .modal-content {
+            background-color: white;
+            margin: 3% auto;
+            padding: 0;
+            border-radius: 15px;
+            width: 90%;
+            max-width: 900px;
+            max-height: 85vh;
+            overflow-y: auto;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+            animation: slideDown 0.3s;
+        }
+        @keyframes slideDown {
+            from { transform: translateY(-50px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        .modal-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px 30px;
+            border-radius: 15px 15px 0 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .modal-header h2 { margin: 0; font-size: 22px; }
+        .close {
+            color: white;
+            font-size: 32px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        .close:hover { transform: rotate(90deg); }
+        .modal-body {
+            padding: 30px;
+        }
+        .return-options {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+        .return-option-btn {
+            flex: 1;
+            padding: 20px;
+            border: 3px solid #ddd;
+            border-radius: 10px;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.3s;
+            background: white;
+        }
+        .return-option-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+        .return-option-btn.active {
+            border-color: #667eea;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .return-option-btn h3 { margin: 10px 0 5px 0; font-size: 18px; }
+        .return-option-btn p { margin: 0; font-size: 13px; opacity: 0.9; }
+        .product-list {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+        .product-list h3 { 
+            color: #667eea; 
+            margin-bottom: 15px;
+            font-size: 18px;
+        }
+        .product-item {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border: 2px solid #e0e0e0;
+            transition: all 0.2s;
+        }
+        .product-item:hover {
+            border-color: #667eea;
+            transform: translateX(5px);
+        }
+        .product-item.selected {
+            border-color: #667eea;
+            background: #e3f2fd;
+        }
+        .product-item-info { flex: 1; }
+        .product-item-info h4 { margin: 0 0 5px 0; color: #333; }
+        .product-item-info p { margin: 0; color: #666; font-size: 13px; }
+        .select-checkbox {
+            width: 24px;
+            height: 24px;
+            cursor: pointer;
+        }
+        .replace-section {
+            background: #fff3e0;
+            padding: 20px;
+            border-radius: 10px;
+            border: 2px solid #ff9800;
+            display: none;
+        }
+        .replace-section h3 {
+            color: #e65100;
+            margin-bottom: 15px;
+        }
+        .modal-footer {
+            padding: 20px 30px;
+            border-top: 1px solid #ddd;
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+        }
+        .search-results {
+            position: absolute;
+            background: white;
+            border: 2px solid #667eea;
+            border-radius: 8px;
+            max-height: 250px;
+            overflow-y: auto;
+            width: calc(100% - 20px);
+            z-index: 1000;
+            display: none;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+        }
+        .search-item {
+            padding: 12px;
+            cursor: pointer;
+            border-bottom: 1px solid #eee;
+            transition: background 0.2s;
+        }
+        .search-item:hover { background: #f0f0f0; }
+        .search-item.selected { 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .form-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr;
+            gap: 10px;
+            align-items: end;
+        }
+    </style>
+</head>
+<body>
+    <div class="navbar">
+        <h1>📜 Sales History (All Records)</h1>
+        <button onclick="window.location.href='dashboard.html'">🏠 Dashboard</button>
+    </div>
+
+    <div class="container">
+        <!-- Search Section -->
+        <div class="search-section">
+            <h2>🔍 Search Sales by Date</h2>
+            <div class="search-grid">
+                <input type="date" id="searchStartDate" placeholder="Start Date">
+                <input type="date" id="searchEndDate" placeholder="End Date">
+                <button class="search-btn" onclick="searchByDate()">🔍 Search</button>
+                <button class="clear-btn" onclick="clearSearch()">✖ Show All</button>
+            </div>
+        </div>
+
+        <!-- Stats Section -->
+        <div class="stats-section">
+            <div class="stat-box">
+                <h3>Total Sales</h3>
+                <p id="totalSalesCount">0</p>
+            </div>
+            <div class="stat-box">
+                <h3>Total Amount</h3>
+                <p id="totalSalesAmount">0 Rs</p>
+            </div>
+            <div class="stat-box">
+                <h3>Oldest Date</h3>
+                <p id="oldestDate">-</p>
+            </div>
+            <div class="stat-box">
+                <h3>Latest Sale</h3>
+                <p id="latestDate">-</p>
+            </div>
+        </div>
+
+        <!-- History Table -->
+        <div class="history-table">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Actions</th>
+                        <th>Status</th>
+                        <th>Customer</th>
+                        <th>Payment</th>
+                        <th>Items</th>
+                        <th>Amount</th>
+                        <th>Date & Time</th>
+                        <th>#</th>
+                    </tr>
+                </thead>
+                <tbody id="historyBody"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Return/Replace Modal -->
+    <div id="returnModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>↩️ Return / Replace Products</h2>
+                <span class="close" onclick="closeReturnModal()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div class="return-options">
+                    <div class="return-option-btn active" onclick="setReturnMode('return')" id="returnModeBtn">
+                        <div style="font-size: 32px;">↩️</div>
+                        <h3>Return Only</h3>
+                        <p>Return products & restore stock</p>
+                    </div>
+                    <div class="return-option-btn" onclick="setReturnMode('replace')" id="replaceModeBtn">
+                        <div style="font-size: 32px;">🔄</div>
+                        <h3>Replace Product</h3>
+                        <p>Exchange with another product</p>
+                    </div>
+                </div>
+
+                <div class="product-list">
+                    <h3>Select Products to Return:</h3>
+                    <div id="returnProductsList"></div>
+                </div>
+
+                <div id="replaceSection" class="replace-section">
+                    <h3>🔄 Select Replacement Product</h3>
+                    <div style="position: relative;">
+                        <input type="text" id="replaceProductSearch" 
+                               placeholder="🔍 Search replacement product..." 
+                               onkeyup="searchReplaceProduct(event)" autocomplete="off">
+                        <div id="replaceSearchResults" class="search-results"></div>
+                    </div>
+                    <div class="form-grid" style="margin-top: 15px;">
+                        <input type="text" id="replaceProductName" placeholder="Product Name" readonly>
+                        <input type="number" id="replaceOriginalPrice" placeholder="Original Price" readonly>
+                        <input type="number" id="replaceOverridePrice" placeholder="Override Price">
+                    </div>
+                    <input type="number" id="replaceQuantity" placeholder="Quantity" min="1" value="1">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button onclick="closeReturnModal()" style="background: #9e9e9e;">
+                    Cancel
+                </button>
+                <button onclick="processReturn()" style="background: #4caf50;">
+                    ✓ Confirm Return/Replace
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let allSales = [];
+        let filteredSales = [];
+        let products = JSON.parse(localStorage.getItem('products') || '[]');
+        let credits = JSON.parse(localStorage.getItem('credits') || '[]');
+        let currentReturnSlip = null;
+        let selectedReturnItems = [];
+        let returnMode = 'return';
+        let selectedReplaceProductId = null;
+        let replaceSearchIndex = -1;
+        let filteredReplaceProducts = [];
+
+        // Load all sales from salesSlips
+        function loadAllSales() {
+            allSales = JSON.parse(localStorage.getItem('salesSlips') || '[]');
+            filteredSales = [...allSales];
+        }
+
+        function loadStats() {
+            const totalCount = filteredSales.length;
+            const totalAmount = filteredSales.reduce((sum, s) => sum + (s.total || 0), 0);
+
+            document.getElementById('totalSalesCount').textContent = totalCount;
+            document.getElementById('totalSalesAmount').textContent = totalAmount.toLocaleString() + ' Rs';
+
+            if (allSales.length > 0) {
+                const dates = allSales.map(s => new Date(s.date));
+                const oldest = new Date(Math.min(...dates));
+                const latest = new Date(Math.max(...dates));
+
+                document.getElementById('oldestDate').textContent = oldest.toLocaleDateString();
+                document.getElementById('latestDate').textContent = latest.toLocaleDateString();
+            } else {
+                document.getElementById('oldestDate').textContent = '-';
+                document.getElementById('latestDate').textContent = '-';
+            }
+        }
+
+        function searchByDate() {
+            const startDate = document.getElementById('searchStartDate').value;
+            const endDate = document.getElementById('searchEndDate').value;
+
+            if (!startDate || !endDate) {
+                alert('Please select both start and end dates!');
+                return;
+            }
+
+            const start = new Date(startDate);
+            start.setHours(0, 0, 0, 0);
+            const end = new Date(endDate);
+            end.setHours(23, 59, 59, 999);
+
+            filteredSales = allSales.filter(sale => {
+                const saleDate = new Date(sale.date);
+                return saleDate >= start && saleDate <= end;
+            });
+
+            loadHistory();
+            loadStats();
+        }
+
+        function clearSearch() {
+            document.getElementById('searchStartDate').value = '';
+            document.getElementById('searchEndDate').value = '';
+            filteredSales = [...allSales];
+            loadHistory();
+            loadStats();
+        }
+
+        function loadHistory() {
+            const tbody = document.getElementById('historyBody');
+            
+            if (filteredSales.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="8" class="empty-state">No sales found in history</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = filteredSales.slice().reverse().map((sale, i) => {
+                let paymentText = sale.paymentType === 'full-cash' ? '💵 Cash' :
+                                 sale.paymentType === 'full-credit' ? '📝 Credit' :
+                                 `💰 Partial<br><small>${(sale.cashAmount || 0).toLocaleString()} cash</small>`;
+                
+                let statusText = sale.returned ? '<span class="delete-badge">RETURNED</span>' : '✓ Active';
+                let rowClass = sale.returned ? 'returned-row' : '';
+                
+                return `
+                <tr class="${rowClass}">
+                    <td>
+                        ${sale.returned ? 
+                            '<button class="returned-btn" disabled>✓ Returned</button>' : 
+                            `<button class="return-btn" onclick="openReturnModal(${sale.id})">↩️ Return</button>`
+                        }
+                    </td>
+                    <td>${statusText}</td>
+                    <td><strong>${sale.customerName || 'Walk-in'}</strong></td>
+                    <td>${paymentText}</td>
+                    <td><strong>${sale.items ? sale.items.length : 0}</strong></td>
+                    <td><strong style="font-size: 16px;">${(sale.total || 0).toLocaleString()} Rs</strong></td>
+                    <td>${new Date(sale.date).toLocaleString()}</td>
+                    <td>${i + 1}</td>
+                </tr>
+            `}).join('');
+        }
+
+        function openReturnModal(slipId) {
+            const slip = allSales.find(s => s.id === slipId);
+            if (!slip || slip.returned) {
+                alert(slip?.returned ? 'This sale has already been returned!' : 'Sale not found!');
+                return;
+            }
+
+            currentReturnSlip = slip;
+            selectedReturnItems = [];
+            
+            const productsList = document.getElementById('returnProductsList');
+            productsList.innerHTML = slip.items.map((item, index) => `
+                <div class="product-item" onclick="toggleReturnItem(${index})">
+                    <div class="product-item-info">
+                        <h4>${item.name} (${item.code})</h4>
+                        <p>Quantity: ${item.quantity} | Price: ${item.price} Rs | Total: ${item.total} Rs</p>
+                    </div>
+                    <input type="checkbox" class="select-checkbox" id="returnItem${index}">
+                </div>
+            `).join('');
+
+            setReturnMode('return');
+            document.getElementById('returnModal').style.display = 'block';
+        }
+
+        function closeReturnModal() {
+            document.getElementById('returnModal').style.display = 'none';
+            currentReturnSlip = null;
+            selectedReturnItems = [];
+            document.getElementById('replaceProductSearch').value = '';
+            document.getElementById('replaceProductName').value = '';
+            document.getElementById('replaceOriginalPrice').value = '';
+            document.getElementById('replaceOverridePrice').value = '';
+            document.getElementById('replaceQuantity').value = '1';
+            selectedReplaceProductId = null;
+        }
+
+        function setReturnMode(mode) {
+            returnMode = mode;
+            document.getElementById('returnModeBtn').classList.remove('active');
+            document.getElementById('replaceModeBtn').classList.remove('active');
+            
+            if (mode === 'return') {
+                document.getElementById('returnModeBtn').classList.add('active');
+                document.getElementById('replaceSection').style.display = 'none';
+            } else {
+                document.getElementById('replaceModeBtn').classList.add('active');
+                document.getElementById('replaceSection').style.display = 'block';
+            }
+        }
+
+        function toggleReturnItem(index) {
+            const checkbox = document.getElementById(`returnItem${index}`);
+            checkbox.checked = !checkbox.checked;
+            
+            if (checkbox.checked) {
+                if (!selectedReturnItems.includes(index)) {
+                    selectedReturnItems.push(index);
+                }
+                checkbox.parentElement.classList.add('selected');
+            } else {
+                selectedReturnItems = selectedReturnItems.filter(i => i !== index);
+                checkbox.parentElement.classList.remove('selected');
+            }
+        }
+
+        function searchReplaceProduct(event) {
+            const searchTerm = document.getElementById('replaceProductSearch').value.toLowerCase();
+            const resultsDiv = document.getElementById('replaceSearchResults');
+            
+            if (!searchTerm) {
+                resultsDiv.style.display = 'none';
+                return;
+            }
+
+            filteredReplaceProducts = products.filter(p => 
+                p.name.toLowerCase().includes(searchTerm) || 
+                p.code.toLowerCase().includes(searchTerm) ||
+                p.company.toLowerCase().includes(searchTerm)
+            );
+
+            if (event.key === 'ArrowDown') {
+                event.preventDefault();
+                replaceSearchIndex = Math.min(replaceSearchIndex + 1, filteredReplaceProducts.length - 1);
+                displayReplaceSearchResults();
+            } else if (event.key === 'ArrowUp') {
+                event.preventDefault();
+                replaceSearchIndex = Math.max(replaceSearchIndex - 1, 0);
+                displayReplaceSearchResults();
+            } else if (event.key === 'Enter') {
+                event.preventDefault();
+                if (filteredReplaceProducts.length > 0 && replaceSearchIndex >= 0) {
+                    selectReplaceProduct(filteredReplaceProducts[replaceSearchIndex].id);
+                } else if (filteredReplaceProducts.length === 1) {
+                    selectReplaceProduct(filteredReplaceProducts[0].id);
+                }
+            } else {
+                replaceSearchIndex = -1;
+                displayReplaceSearchResults();
+            }
+        }
+
+        function displayReplaceSearchResults() {
+            const resultsDiv = document.getElementById('replaceSearchResults');
+            
+            if (filteredReplaceProducts.length === 0) {
+                resultsDiv.innerHTML = '<div class="search-item">No products found...</div>';
+                resultsDiv.style.display = 'block';
+                return;
+            }
+
+            resultsDiv.innerHTML = filteredReplaceProducts.map((p, index) => `
+                <div class="search-item ${index === replaceSearchIndex ? 'selected' : ''}" 
+                     onclick="selectReplaceProduct(${p.id})">
+                    <strong>${p.name}</strong> - ${p.code} | Stock: ${p.quantity} | ${p.sellingPrice} Rs
+                </div>
+            `).join('');
+            
+            resultsDiv.style.display = 'block';
+        }
+
+        function selectReplaceProduct(productId) {
+            const product = products.find(p => p.id === productId);
+            if (!product) return;
+
+            selectedReplaceProductId = productId;
+            document.getElementById('replaceProductSearch').value = product.name;
+            document.getElementById('replaceProductName').value = product.name;
+            document.getElementById('replaceOriginalPrice').value = product.sellingPrice;
+            document.getElementById('replaceOverridePrice').value = '';
+            document.getElementById('replaceQuantity').value = 1;
+            document.getElementById('replaceSearchResults').style.display = 'none';
+        }
+
+        function processReturn() {
+            if (selectedReturnItems.length === 0) {
+                alert('Please select at least one product to return!');
+                return;
+            }
+
+            if (returnMode === 'replace' && !selectedReplaceProductId) {
+                alert('Please select a replacement product!');
+                return;
+            }
+
+            let returnAmount = 0;
+            selectedReturnItems.forEach(index => {
+                const item = currentReturnSlip.items[index];
+                returnAmount += item.total;
+                
+                const product = products.find(p => p.id === item.productId);
+                if (product) product.quantity += item.quantity;
+            });
+
+            let replacementItem = null;
+            if (returnMode === 'replace') {
+                const replaceProduct = products.find(p => p.id === selectedReplaceProductId);
+                const replaceOriginal = parseFloat(document.getElementById('replaceOriginalPrice').value);
+                const replaceOverride = parseFloat(document.getElementById('replaceOverridePrice').value);
+                const replacePrice = replaceOverride || replaceOriginal;
+                const replaceQty = parseInt(document.getElementById('replaceQuantity').value);
+
+                if (replaceProduct.quantity < replaceQty) {
+                    alert(`Not enough stock for replacement! Available: ${replaceProduct.quantity}`);
+                    return;
+                }
+
+                replacementItem = {
+                    id: Date.now(),
+                    productId: replaceProduct.id,
+                    name: replaceProduct.name,
+                    code: replaceProduct.code,
+                    originalPrice: replaceOriginal,
+                    price: replacePrice,
+                    quantity: replaceQty,
+                    total: replacePrice * replaceQty
+                };
+
+                replaceProduct.quantity -= replaceQty;
+            }
+
+            localStorage.setItem('products', JSON.stringify(products));
+
+            if (currentReturnSlip.creditAmount > 0 && currentReturnSlip.creditCustomerId) {
+                const customer = credits.find(c => c.id === currentReturnSlip.creditCustomerId);
+                if (customer) {
+                    const creditRatio = currentReturnSlip.creditAmount / currentReturnSlip.total;
+                    const returnCreditAmount = returnAmount * creditRatio;
+                    
+                    customer.amount -= returnCreditAmount;
+                    
+                    if (!customer.ledger) customer.ledger = [];
+                    
+                    customer.ledger.push({
+                        id: Date.now(),
+                        date: new Date().toISOString(),
+                        type: 'return',
+                        items: selectedReturnItems.map(i => currentReturnSlip.items[i]),
+                        amount: -returnCreditAmount,
+                        balance: customer.amount - customer.paid,
+                        returned: true
+                    });
+
+                    if (replacementItem) {
+                        const replacementCreditAmount = replacementItem.total * creditRatio;
+                        customer.amount += replacementCreditAmount;
+                        
+                        customer.ledger.push({
+                            id: Date.now(),
+                            date: new Date().toISOString(),
+                            type: 'product',
+                            items: [replacementItem],
+                            amount: replacementCreditAmount,
+                            balance: customer.amount - customer.paid,
+                            returned: false
+                        });
+                    }
+                    
+                    localStorage.setItem('credits', JSON.stringify(credits));
+                }
+            }
+
+            selectedReturnItems.forEach(index => {
+                currentReturnSlip.items[index].returned = true;
+            });
+
+            if (replacementItem) {
+                currentReturnSlip.items.push(replacementItem);
+                currentReturnSlip.total = currentReturnSlip.total - returnAmount + replacementItem.total;
+                currentReturnSlip.cashAmount = currentReturnSlip.paymentType === 'full-cash' ? currentReturnSlip.total : 
+                                               currentReturnSlip.paymentType === 'partial' ? Math.max(0, currentReturnSlip.cashAmount - returnAmount + replacementItem.total) : 0;
+                currentReturnSlip.creditAmount = currentReturnSlip.total - currentReturnSlip.cashAmount;
+            } else {
+                if (selectedReturnItems.length === currentReturnSlip.items.length) {
+                    currentReturnSlip.returned = true;
+                }
+            }
+
+            localStorage.setItem('salesSlips', JSON.stringify(allSales));
+
+            alert(`✓ ${returnMode === 'replace' ? 'Replacement' : 'Return'} processed successfully!`);
+            closeReturnModal();
+            loadAllSales();
+            filteredSales = [...allSales];
+            loadHistory();
+            loadStats();
+        }
+
+        document.addEventListener('click', function(event) {
+            if (!event.target.closest('#replaceProductSearch') && !event.target.closest('#replaceSearchResults')) {
+                document.getElementById('replaceSearchResults').style.display = 'none';
+            }
+        });
+
+        window.onclick = function(event) {
+            const modal = document.getElementById('returnModal');
+            if (event.target == modal) {
+                closeReturnModal();
+            }
+        }
+
+        // Initialize
+        loadAllSales();
+        loadHistory();
+        loadStats();
+    </script>
+</body>
+</html>

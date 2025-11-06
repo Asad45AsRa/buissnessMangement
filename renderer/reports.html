@@ -1,0 +1,673 @@
+<!DOCTYPE html>
+<html id="mainHtml">
+<head>
+    <meta charset="UTF-8">
+    <title>Reports</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, sans-serif; background: #f5f5f5; }
+        .navbar {
+            background: #667eea;
+            color: white;
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+        }
+        .navbar button {
+            background: white;
+            color: #667eea;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .container { max-width: 1400px; margin: 30px auto; padding: 20px; }
+        .filters {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+        select, input {
+            padding: 10px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        .report-card {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        .stat-box {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+        }
+        .stat-box h3 { font-size: 14px; margin-bottom: 10px; }
+        .stat-box p { font-size: 28px; font-weight: bold; }
+        .profit-section {
+            background: linear-gradient(135deg, #27ae60 0%, #229954 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .profit-section.loss {
+            background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+        }
+        .profit-section h2 {
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+        .profit-section p {
+            font-size: 48px;
+            font-weight: bold;
+        }
+        .profit-breakdown {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 10px;
+            margin-top: 20px;
+        }
+        .breakdown-item {
+            background: rgba(255,255,255,0.2);
+            padding: 15px;
+            border-radius: 8px;
+        }
+        .breakdown-item h4 {
+            font-size: 12px;
+            margin-bottom: 5px;
+            opacity: 0.9;
+        }
+        .breakdown-item p {
+            font-size: 20px;
+            font-weight: bold;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td { padding: 12px; text-align: center; border-bottom: 1px solid #ddd; }
+        th { background: #667eea; color: white; }
+        .print-btn { background: #27ae60; margin-right: 10px; }
+        @media print {
+            .navbar, .filters, button { display: none; }
+            body { background: white; }
+        }
+    </style>
+</head>
+<body>
+    <div class="navbar">
+        <h1 id="pageTitle">Reports</h1>
+        <button onclick="window.location.href='dashboard.html'" id="homeBtn">🏠 Dashboard</button>
+    </div>
+
+    <div class="container">
+        <div class="filters">
+            <select id="reportType" onchange="updateFilters()">
+                <option value="daily" id="optDaily">Daily</option>
+                <option value="monthly" id="optMonthly">Monthly</option>
+                <option value="yearly" id="optYearly">Yearly</option>
+                <option value="custom" id="optCustom">Custom Date</option>
+            </select>
+            
+            <input type="date" id="startDate" style="display:none;">
+            <input type="date" id="endDate" style="display:none;">
+            
+            <select id="reportCategory">
+                <option value="all" id="optAll">All</option>
+                <option value="profit" id="optProfit">Profit/Loss</option>
+                <option value="sales" id="optSales">Sales</option>
+                <option value="products" id="optProducts">Products</option>
+                <option value="expenses" id="optExpenses">Expenses</option>
+                <option value="loans" id="optLoans">Loans</option>
+                <option value="credits" id="optCredits">Credits</option>
+            </select>
+            
+            <button onclick="generateReport()" id="genBtn">🔍 Generate Report</button>
+        </div>
+
+        <div id="reportContent" class="report-card" style="display:none;">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 20px;">
+                <h2 id="reportTitle"></h2>
+                <div>
+                    <button class="print-btn" onclick="printReport('urdu')" id="printUrduBtn">🖨️ Print Urdu</button>
+                    <button class="print-btn" onclick="printReport('english')" id="printEngBtn">🖨️ Print English</button>
+                </div>
+            </div>
+
+            <div id="profitContainer"></div>
+            <div class="stats" id="statsContainer"></div>
+            <div id="tableContainer"></div>
+        </div>
+    </div>
+
+    <script>
+        const translations = {
+            ur: {
+                pageTitle: 'رپورٹس',
+                homeBtn: '🏠 ڈیش بورڈ',
+                optDaily: 'روزانہ',
+                optMonthly: 'ماہانہ',
+                optYearly: 'سالانہ',
+                optCustom: 'مخصوص تاریخ',
+                optAll: 'تمام',
+                optProfit: 'منافع/نقصان',
+                optSales: 'فروخت',
+                optProducts: 'مصنوعات',
+                optExpenses: 'اخراجات',
+                optLoans: 'قرضے',
+                optCredits: 'ادھار',
+                genBtn: '🔍 رپورٹ بنائیں',
+                printUrduBtn: '🖨️ اردو پرنٹ',
+                printEngBtn: '🖨️ انگلش پرنٹ',
+                profitLabel: 'منافع',
+                lossLabel: 'نقصان',
+                revenue: 'آمدنی',
+                cost: 'لاگت',
+                expenses: 'اخراجات',
+                loans: 'قرضے',
+                personal: 'ذاتی',
+                shop: 'دکان'
+            },
+            en: {
+                pageTitle: 'Reports',
+                homeBtn: '🏠 Dashboard',
+                optDaily: 'Daily',
+                optMonthly: 'Monthly',
+                optYearly: 'Yearly',
+                optCustom: 'Custom Date',
+                optAll: 'All',
+                optProfit: 'Profit/Loss',
+                optSales: 'Sales',
+                optProducts: 'Products',
+                optExpenses: 'Expenses',
+                optLoans: 'Loans',
+                optCredits: 'Credits',
+                genBtn: '🔍 Generate Report',
+                printUrduBtn: '🖨️ Print Urdu',
+                printEngBtn: '🖨️ Print English',
+                profitLabel: 'Profit',
+                lossLabel: 'Loss',
+                revenue: 'Revenue',
+                cost: 'Cost',
+                expenses: 'Expenses',
+                loans: 'Loans',
+                personal: 'Personal',
+                shop: 'Shop'
+            }
+        };
+
+        function calculateProfit(startDate, endDate) {
+            const sales = JSON.parse(localStorage.getItem('salesSlips') || '[]');
+            const products = JSON.parse(localStorage.getItem('products') || '[]');
+            const expenses = JSON.parse(localStorage.getItem('expenses') || '[]');
+            const loans = JSON.parse(localStorage.getItem('loans') || '[]');
+            
+            const periodSales = sales.filter(s => {
+                const saleDate = new Date(s.date);
+                return saleDate >= startDate && saleDate <= endDate && !s.returned;
+            });
+            
+            let totalRevenue = 0;
+            let totalCost = 0;
+            
+            periodSales.forEach(sale => {
+                const cashAmount = sale.cashAmount || 0;
+                totalRevenue += cashAmount;
+                
+                sale.items.forEach(item => {
+                    const product = products.find(p => p.id === item.productId);
+                    if (product) {
+                        const itemCashRatio = cashAmount / sale.total;
+                        const actualCashQuantity = item.quantity * itemCashRatio;
+                        totalCost += product.purchasePrice * actualCashQuantity;
+                    }
+                });
+            });
+            
+            const periodExpenses = expenses.filter(e => {
+                const expDate = new Date(e.date);
+                return expDate >= startDate && expDate <= endDate;
+            });
+            
+            let totalExpenses = 0;
+            let personalExpenses = 0;
+            let shopExpenses = 0;
+            
+            periodExpenses.forEach(e => {
+                const amount = parseFloat(e.amount);
+                if (!isNaN(amount)) {
+                    totalExpenses += amount;
+                    if (e.type === 'personal') {
+                        personalExpenses += amount;
+                    } else if (e.type === 'shop') {
+                        shopExpenses += amount;
+                    }
+                }
+            });
+            
+            const totalOutstandingLoans = loans.reduce((sum, l) => sum + (l.amount - l.paid), 0);
+            const profit = totalRevenue - totalCost - totalExpenses - totalOutstandingLoans;
+            
+            return {
+                revenue: totalRevenue,
+                cost: totalCost,
+                expenses: totalExpenses,
+                personalExpenses: personalExpenses,
+                shopExpenses: shopExpenses,
+                loans: totalOutstandingLoans,
+                profit: profit
+            };
+        }
+
+        function applyLanguage() {
+            const lang = localStorage.getItem('language') || 'en';
+            const t = translations[lang];
+            document.getElementById('mainHtml').dir = lang === 'ur' ? 'rtl' : 'ltr';
+            
+            document.getElementById('pageTitle').textContent = t.pageTitle;
+            document.getElementById('homeBtn').textContent = t.homeBtn;
+            document.getElementById('optDaily').textContent = t.optDaily;
+            document.getElementById('optMonthly').textContent = t.optMonthly;
+            document.getElementById('optYearly').textContent = t.optYearly;
+            document.getElementById('optCustom').textContent = t.optCustom;
+            document.getElementById('optAll').textContent = t.optAll;
+            document.getElementById('optProfit').textContent = t.optProfit;
+            document.getElementById('optSales').textContent = t.optSales;
+            document.getElementById('optProducts').textContent = t.optProducts;
+            document.getElementById('optExpenses').textContent = t.optExpenses;
+            document.getElementById('optLoans').textContent = t.optLoans;
+            document.getElementById('optCredits').textContent = t.optCredits;
+            document.getElementById('genBtn').textContent = t.genBtn;
+            document.getElementById('printUrduBtn').textContent = t.printUrduBtn;
+            document.getElementById('printEngBtn').textContent = t.printEngBtn;
+        }
+
+        function updateFilters() {
+            const type = document.getElementById('reportType').value;
+            const startDate = document.getElementById('startDate');
+            const endDate = document.getElementById('endDate');
+            
+            if (type === 'custom') {
+                startDate.style.display = 'block';
+                endDate.style.display = 'block';
+            } else {
+                startDate.style.display = 'none';
+                endDate.style.display = 'none';
+            }
+        }
+
+        function generateReport() {
+            const lang = localStorage.getItem('language') || 'en';
+            const t = translations[lang];
+            const type = document.getElementById('reportType').value;
+            const category = document.getElementById('reportCategory').value;
+            
+            const products = JSON.parse(localStorage.getItem('products') || '[]');
+            const credits = JSON.parse(localStorage.getItem('credits') || '[]');
+            const loans = JSON.parse(localStorage.getItem('loans') || '[]');
+            const salesSlips = JSON.parse(localStorage.getItem('salesSlips') || '[]');
+            const expenses = JSON.parse(localStorage.getItem('expenses') || '[]');
+            
+            let dateFilter = getDateFilter(type);
+            
+            const filteredSales = salesSlips.filter(s => {
+                const saleDate = new Date(s.date);
+                return saleDate >= dateFilter.start && saleDate <= dateFilter.end;
+            });
+
+            const filteredExpenses = expenses.filter(e => {
+                const expDate = new Date(e.date);
+                return expDate >= dateFilter.start && expDate <= dateFilter.end;
+            });
+            
+            const profitData = calculateProfit(dateFilter.start, dateFilter.end);
+            
+            let totalSales = filteredSales.reduce((sum, s) => sum + s.total, 0);
+            let totalProducts = products.length;
+            let totalLoans = loans.reduce((sum, l) => sum + (l.amount - l.paid), 0);
+            let totalCredits = credits.reduce((sum, c) => sum + (c.amount - c.paid), 0);
+            
+            document.getElementById('reportContent').style.display = 'block';
+            document.getElementById('reportTitle').textContent = `Report - ${getReportTitle(type)}`;
+            
+            if (category === 'all' || category === 'profit') {
+                const profitHTML = `
+                    <div class="profit-section ${profitData.profit < 0 ? 'loss' : ''}">
+                        <h2>${profitData.profit >= 0 ? t.profitLabel : t.lossLabel}</h2>
+                        <p>${Math.abs(profitData.profit).toLocaleString()} Rs</p>
+                        <div class="profit-breakdown">
+                            <div class="breakdown-item">
+                                <h4>${t.revenue}</h4>
+                                <p>${profitData.revenue.toLocaleString()}</p>
+                            </div>
+                            <div class="breakdown-item">
+                                <h4>${t.cost}</h4>
+                                <p>-${profitData.cost.toLocaleString()}</p>
+                            </div>
+                            <div class="breakdown-item">
+                                <h4>${t.expenses}</h4>
+                                <p>-${profitData.expenses.toLocaleString()}</p>
+                            </div>
+                            <div class="breakdown-item">
+                                <h4>${t.loans}</h4>
+                                <p>-${profitData.loans.toLocaleString()}</p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                document.getElementById('profitContainer').innerHTML = profitHTML;
+            } else {
+                document.getElementById('profitContainer').innerHTML = '';
+            }
+            
+            const statsHTML = `
+                <div class="stat-box">
+                    <h3>Total Products</h3>
+                    <p>${totalProducts}</p>
+                </div>
+                <div class="stat-box">
+                    <h3>Total Sales</h3>
+                    <p>${totalSales.toLocaleString()} Rs</p>
+                </div>
+                <div class="stat-box">
+                    <h3>Pending Loans</h3>
+                    <p>${totalLoans.toLocaleString()} Rs</p>
+                </div>
+                <div class="stat-box">
+                    <h3>Pending Credits</h3>
+                    <p>${totalCredits.toLocaleString()} Rs</p>
+                </div>
+            `;
+            
+            document.getElementById('statsContainer').innerHTML = statsHTML;
+            generateTables(category, products, credits, loans, filteredSales, filteredExpenses, profitData, t);
+        }
+
+        function getDateFilter(type) {
+            const now = new Date();
+            let start, end;
+            
+            switch(type) {
+                case 'daily':
+                    start = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0);
+                    end = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
+                    break;
+                case 'monthly':
+                    start = new Date(now.getFullYear(), now.getMonth(), 1);
+                    end = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
+                    break;
+                case 'yearly':
+                    start = new Date(now.getFullYear(), 0, 1);
+                    end = new Date(now.getFullYear(), 11, 31, 23, 59, 59);
+                    break;
+                case 'custom':
+                    start = new Date(document.getElementById('startDate').value);
+                    start.setHours(0, 0, 0, 0);
+                    end = new Date(document.getElementById('endDate').value);
+                    end.setHours(23, 59, 59, 999);
+                    break;
+            }
+            
+            return { start, end };
+        }
+
+        function getReportTitle(type) {
+            const titles = {
+                'daily': 'Daily Report',
+                'monthly': 'Monthly Report',
+                'yearly': 'Yearly Report',
+                'custom': 'Custom Period Report'
+            };
+            return titles[type];
+        }
+
+        function generateTables(category, products, credits, loans, sales, expenses, profitData, t) {
+            let html = '';
+            
+            if (category === 'all' || category === 'sales') {
+                html += `
+                    <h3>Sales</h3>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Total Amount</th>
+                                <th>Items Count</th>
+                                <th>Date & Time</th>
+                                <th>#</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${sales.map((s, i) => `
+                                <tr>
+                                    <td>${s.total}</td>
+                                    <td>${s.items.length}</td>
+                                    <td>${new Date(s.date).toLocaleString()}</td>
+                                    <td>${i + 1}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                `;
+            }
+            
+            if (category === 'all' || category === 'products') {
+                html += `
+                    <h3 style="margin-top: 30px;">Products</h3>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Company</th>
+                                <th>Quantity</th>
+                                <th>Selling</th>
+                                <th>Purchase</th>
+                                <th>Code</th>
+                                <th>Name</th>
+                                <th>#</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${products.map((p, i) => `
+                                <tr>
+                                    <td>${p.company}</td>
+                                    <td>${p.quantity}</td>
+                                    <td>${p.sellingPrice}</td>
+                                    <td>${p.purchasePrice}</td>
+                                    <td>${p.code}</td>
+                                    <td>${p.name}</td>
+                                    <td>${i + 1}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                `;
+            }
+
+            if (category === 'all' || category === 'expenses') {
+                const personalExp = expenses.filter(e => e.type === 'personal');
+                const shopExp = expenses.filter(e => e.type === 'shop');
+                
+                html += `
+                    <h3 style="margin-top: 30px;">Expenses Summary</h3>
+                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 20px;">
+                        <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; border-radius: 10px; text-align: center;">
+                            <h4 style="margin-bottom: 10px;">Total Expenses</h4>
+                            <p style="font-size: 24px; font-weight: bold;">${profitData.expenses.toLocaleString()} Rs</p>
+                        </div>
+                        <div style="background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%); color: white; padding: 20px; border-radius: 10px; text-align: center;">
+                            <h4 style="margin-bottom: 10px;">${t.personal} Expenses</h4>
+                            <p style="font-size: 24px; font-weight: bold;">${profitData.personalExpenses.toLocaleString()} Rs</p>
+                        </div>
+                        <div style="background: linear-gradient(135deg, #3498db 0%, #2980b9 100%); color: white; padding: 20px; border-radius: 10px; text-align: center;">
+                            <h4 style="margin-bottom: 10px;">${t.shop} Expenses</h4>
+                            <p style="font-size: 24px; font-weight: bold;">${profitData.shopExpenses.toLocaleString()} Rs</p>
+                        </div>
+                    </div>
+                `;
+                
+                if (personalExp.length > 0) {
+                    html += `
+                        <h4 style="margin-top: 20px;">Personal Expenses</h4>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Reason</th>
+                                    <th>Amount</th>
+                                    <th>Date</th>
+                                    <th>#</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${personalExp.map((e, i) => `
+                                    <tr>
+                                        <td>${e.reason}</td>
+                                        <td><strong>${parseFloat(e.amount).toLocaleString()} Rs</strong></td>
+                                        <td>${new Date(e.date).toLocaleDateString()}</td>
+                                        <td>${i + 1}</td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    `;
+                } else {
+                    html += `<p style="text-align: center; padding: 20px; color: #999;">No Personal Expenses</p>`;
+                }
+
+                if (shopExp.length > 0) {
+                    html += `
+                        <h4 style="margin-top: 30px;">Shop Expenses</h4>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Reason</th>
+                                    <th>Amount</th>
+                                    <th>Date</th>
+                                    <th>#</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${shopExp.map((e, i) => `
+                                    <tr>
+                                        <td>${e.reason}</td>
+                                        <td><strong>${parseFloat(e.amount).toLocaleString()} Rs</strong></td>
+                                        <td>${new Date(e.date).toLocaleDateString()}</td>
+                                        <td>${i + 1}</td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    `;
+                } else {
+                    html += `<p style="text-align: center; padding: 20px; color: #999;">No Shop Expenses</p>`;
+                }
+            }
+            
+            if (category === 'all' || category === 'credits') {
+                html += `
+                    <h3 style="margin-top: 30px;">Credit Sales</h3>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Remaining</th>
+                                <th>Paid</th>
+                                <th>Total</th>
+                                <th>Contact</th>
+                                <th>Name</th>
+                                <th>#</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${credits.map((c, i) => `
+                                <tr>
+                                    <td>${c.amount - c.paid}</td>
+                                    <td>${c.paid}</td>
+                                    <td>${c.amount}</td>
+                                    <td>${c.contact}</td>
+                                    <td>${c.name}</td>
+                                    <td>${i + 1}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                `;
+            }
+            
+            if (category === 'all' || category === 'loans') {
+                html += `
+                    <h3 style="margin-top: 30px;">Loans</h3>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Remaining</th>
+                                <th>Paid</th>
+                                <th>Total</th>
+                                <th>Contact</th>
+                                <th>Name</th>
+                                <th>#</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${loans.map((l, i) => `
+                                <tr>
+                                    <td>${l.amount - l.paid}</td>
+                                    <td>${l.paid}</td>
+                                    <td>${l.amount}</td>
+                                    <td>${l.contact}</td>
+                                    <td>${l.person}</td>
+                                    <td>${i + 1}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                `;
+            }
+            
+            document.getElementById('tableContainer').innerHTML = html;
+        }
+
+        function printReport(language) {
+            if (language === 'urdu') {
+                document.documentElement.setAttribute('dir', 'rtl');
+                document.documentElement.setAttribute('lang', 'ur');
+            } else {
+                document.documentElement.setAttribute('dir', 'ltr');
+                document.documentElement.setAttribute('lang', 'en');
+            }
+            
+            window.print();
+            
+            const userLang = localStorage.getItem('language') || 'en';
+            document.documentElement.setAttribute('dir', userLang === 'ur' ? 'rtl' : 'ltr');
+            document.documentElement.setAttribute('lang', userLang);
+        }
+
+        applyLanguage();
+    </script>
+</body>
+</html>

@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html id="mainHtml">
+<head>
+    <meta charset="UTF-8">
+    <title>Backup & Restore</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, sans-serif; background: #f5f5f5; }
+        .navbar {
+            background: #667eea;
+            color: white;
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+        }
+        .navbar button {
+            background: white;
+            color: #667eea;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .container { max-width: 1200px; margin: 50px auto; padding: 20px; }
+        .card {
+            background: white;
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+        h2 { color: #667eea; margin-bottom: 20px; }
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 18px;
+            margin: 10px;
+            transition: 0.3s;
+        }
+        button:hover { background: #5568d3; transform: scale(1.05); }
+        .export-btn { background: #27ae60; }
+        .import-btn { background: #3498db; }
+        .danger-btn { background: #e74c3c; }
+        input[type="file"] {
+            padding: 10px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+            margin: 10px 0;
+        }
+        .info {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+        .info p { margin: 10px 0; color: #666; }
+        .success-msg { color: #27ae60; font-weight: bold; margin: 15px 0; }
+        .error-msg { color: #e74c3c; font-weight: bold; margin: 15px 0; }
+    </style>
+</head>
+<body>
+    <div class="navbar">
+        <h1 id="pageTitle">Backup & Restore</h1>
+        <button onclick="window.location.href='dashboard.html'" id="homeBtn">🏠 Dashboard</button>
+    </div>
+
+    <div class="container">
+        <div class="card">
+            <h2 id="exportTitle">📤 Export Backup</h2>
+            <div class="info">
+                <p id="exportInfo">Export all your data (Products, Sales, Loans, Credits, Expenses) to a JSON file.</p>
+            </div>
+            <button class="export-btn" onclick="exportData()" id="exportBtn">💾 Download Backup File</button>
+            <div id="exportMsg"></div>
+        </div>
+
+        <div class="card">
+            <h2 id="importTitle">📥 Import Backup</h2>
+            <div class="info">
+                <p id="importInfo">Import backup file. WARNING: This will replace all current data!</p>
+            </div>
+            <input type="file" id="fileInput" accept=".json">
+            <br>
+            <button class="import-btn" onclick="importData()" id="importBtn">📂 Import Backup</button>
+            <div id="importMsg"></div>
+        </div>
+
+        <div class="card">
+            <h2 id="dangerTitle">⚠️ Danger Zone</h2>
+            <div class="info">
+                <p id="dangerInfo">Clear all data. This cannot be undone!</p>
+            </div>
+            <button class="danger-btn" onclick="clearAllData()" id="clearBtn">🗑️ Clear All Data</button>
+        </div>
+    </div>
+
+    <script>
+        const translations = {
+            ur: {
+                pageTitle: 'بیک اپ اور بحالی',
+                homeBtn: '🏠 ڈیش بورڈ',
+                exportTitle: '📤 بیک اپ ایکسپورٹ',
+                exportInfo: 'تمام ڈیٹا محفوظ کریں',
+                exportBtn: '💾 ڈاؤن لوڈ',
+                importTitle: '📥 بیک اپ امپورٹ',
+                importInfo: 'ڈیٹا بحال کریں',
+                importBtn: '📂 امپورٹ',
+                dangerTitle: '⚠️ خطرناک زون',
+                dangerInfo: 'تمام ڈیٹا حذف',
+                clearBtn: '🗑️ صاف کریں'
+            },
+            en: {
+                pageTitle: 'Backup & Restore',
+                homeBtn: '🏠 Dashboard',
+                exportTitle: '📤 Export Backup',
+                exportInfo: 'Export all data',
+                exportBtn: '💾 Download',
+                importTitle: '📥 Import Backup',
+                importInfo: 'Restore data',
+                importBtn: '📂 Import',
+                dangerTitle: '⚠️ Danger Zone',
+                dangerInfo: 'Clear all data',
+                clearBtn: '🗑️ Clear All'
+            }
+        };
+
+        function applyLanguage() {
+            const lang = localStorage.getItem('language') || 'en';
+            const t = translations[lang];
+            document.getElementById('mainHtml').dir = lang === 'ur' ? 'rtl' : 'ltr';
+            
+            document.getElementById('pageTitle').textContent = t.pageTitle;
+            document.getElementById('homeBtn').textContent = t.homeBtn;
+            document.getElementById('exportTitle').textContent = t.exportTitle;
+            document.getElementById('exportInfo').textContent = t.exportInfo;
+            document.getElementById('exportBtn').textContent = t.exportBtn;
+            document.getElementById('importTitle').textContent = t.importTitle;
+            document.getElementById('importInfo').textContent = t.importInfo;
+            document.getElementById('importBtn').textContent = t.importBtn;
+            document.getElementById('dangerTitle').textContent = t.dangerTitle;
+            document.getElementById('dangerInfo').textContent = t.dangerInfo;
+            document.getElementById('clearBtn').textContent = t.clearBtn;
+        }
+
+        function exportData() {
+            const data = {
+                exportDate: new Date().toISOString(),
+                version: '2.1',
+                products: JSON.parse(localStorage.getItem('products') || '[]'),
+                salesSlips: JSON.parse(localStorage.getItem('salesSlips') || '[]'),
+                loans: JSON.parse(localStorage.getItem('loans') || '[]'),
+                credits: JSON.parse(localStorage.getItem('credits') || '[]'),
+                expenses: JSON.parse(localStorage.getItem('expenses') || '[]'),
+                users: JSON.parse(localStorage.getItem('users') || '[]')
+            };
+
+            const dataStr = JSON.stringify(data, null, 2);
+            const dataBlob = new Blob([dataStr], { type: 'application/json' });
+            
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(dataBlob);
+            link.download = `AL-Fatah-Backup-${new Date().toISOString().split('T')[0]}.json`;
+            link.click();
+
+            document.getElementById('exportMsg').innerHTML = '<p class="success-msg">✅ Backup exported!</p>';
+            setTimeout(() => {
+                document.getElementById('exportMsg').innerHTML = '';
+            }, 3000);
+        }
+
+        function importData() {
+            const fileInput = document.getElementById('fileInput');
+            const file = fileInput.files[0];
+
+            if (!file) {
+                document.getElementById('importMsg').innerHTML = '<p class="error-msg">❌ Select a file!</p>';
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = JSON.parse(e.target.result);
+
+                    if (!data.version || !data.products) {
+                        throw new Error('Invalid file');
+                    }
+
+                    if (confirm('Replace ALL data?')) {
+                        localStorage.setItem('products', JSON.stringify(data.products || []));
+                        localStorage.setItem('salesSlips', JSON.stringify(data.salesSlips || []));
+                        localStorage.setItem('loans', JSON.stringify(data.loans || []));
+                        localStorage.setItem('credits', JSON.stringify(data.credits || []));
+                        localStorage.setItem('expenses', JSON.stringify(data.expenses || []));
+                        
+                        document.getElementById('importMsg').innerHTML = '<p class="success-msg">✅ Data imported!</p>';
+                        
+                        setTimeout(() => {
+                            window.location.href = 'dashboard.html';
+                        }, 2000);
+                    }
+                } catch (error) {
+                    document.getElementById('importMsg').innerHTML = '<p class="error-msg">❌ Invalid file!</p>';
+                }
+            };
+
+            reader.readAsText(file);
+        }
+
+        function clearAllData() {
+            if (confirm('⚠️ Delete ALL data?')) {
+                if (confirm('Final confirmation?')) {
+                    localStorage.removeItem('products');
+                    localStorage.removeItem('salesSlips');
+                    localStorage.removeItem('loans');
+                    localStorage.removeItem('credits');
+                    localStorage.removeItem('expenses');
+                    
+                    alert('✅ All data cleared!');
+                    window.location.href = 'dashboard.html';
+                }
+            }
+        }
+
+        applyLanguage();
+    </script>
+</body>
+</html>

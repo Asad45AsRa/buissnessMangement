@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html id="mainHtml">
+<head>
+    <meta charset="UTF-8">
+    <title>Products Management</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, sans-serif; background: #f5f5f5; }
+        .navbar {
+            background: #667eea;
+            color: white;
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+        }
+        .navbar button {
+            background: white;
+            color: #667eea;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .container { max-width: 1400px; margin: 30px auto; padding: 20px; }
+        .form-card {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .form-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+        input, select {
+            padding: 10px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        table {
+            width: 100%;
+            background: white;
+            border-collapse: collapse;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        th, td {
+            padding: 12px;
+            text-align: center;
+            border-bottom: 1px solid #ddd;
+        }
+        th { background: #667eea; color: white; }
+        .delete-btn { background: #e74c3c; padding: 5px 15px; font-size: 14px; }
+        .note {
+            color: #666;
+            font-size: 14px;
+            font-style: italic;
+            margin-top: 5px;
+        }
+        .payment-type-section {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin: 15px 0;
+        }
+        .payment-btn {
+            padding: 15px;
+            border: 3px solid #ddd;
+            border-radius: 10px;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.3s;
+            background: white;
+        }
+        .payment-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+        .payment-btn.active {
+            border-color: #667eea;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            font-weight: bold;
+        }
+        .loan-section {
+            background: #fff3e0;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+            border: 2px solid #ff9800;
+            display: none;
+        }
+        .loan-badge {
+            background: #ff9800;
+            color: white;
+            padding: 3px 8px;
+            border-radius: 3px;
+            font-size: 11px;
+            margin-left: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="navbar">
+        <h1 id="pageTitle">Products Management</h1>
+        <button onclick="window.location.href='dashboard.html'" id="homeBtn">🏠 Dashboard</button>
+    </div>
+
+    <div class="container">
+        <div class="form-card">
+            <h2 id="addProdTitle">Add New Product</h2>
+            
+            <h3 style="color: #667eea; margin: 15px 0;">💳 Purchase Type</h3>
+            <div class="payment-type-section">
+                <div class="payment-btn active" onclick="setPurchaseType('cash')" id="cashPurchaseBtn">
+                    <div style="font-size: 24px;">💵</div>
+                    <strong>Cash Purchase</strong><br><small>نقد خریداری</small>
+                </div>
+                <div class="payment-btn" onclick="setPurchaseType('loan')" id="loanPurchaseBtn">
+                    <div style="font-size: 24px;">💰</div>
+                    <strong>Loan Purchase</strong><br><small>قرض پر خریداری</small>
+                </div>
+            </div>
+
+            <div id="loanSection" class="loan-section">
+                <h4 style="color: #e65100; margin-bottom: 10px;">Select Loan Provider</h4>
+                <select id="loanProviderSelect">
+                    <option value="">-- Select Loan Provider --</option>
+                </select>
+            </div>
+            
+            <div class="form-row">
+                <input type="text" id="productName" placeholder="Product Name">
+                <input type="text" id="productCode" placeholder="Product Code">
+                <input type="text" id="companyName" placeholder="Company Name">
+            </div>
+            <div class="form-row">
+                <input type="number" id="purchasePrice" placeholder="Purchase Price">
+                <input type="number" id="sellingPrice" placeholder="Selling Price">
+                <input type="number" id="quantity" placeholder="Quantity">
+            </div>
+            <div class="form-row">
+                <input type="date" id="mfgDate" placeholder="MFG Date (Optional)">
+                <input type="date" id="expDate" placeholder="EXP Date (Optional)">
+            </div>
+            <p class="note">* MFG and EXP dates are optional (اختیاری ہیں)</p>
+            <button onclick="addProduct()" id="addBtn">➕ Add Product</button>
+        </div>
+
+        <div style="background: white; padding: 15px; margin-bottom: 10px; border-radius: 5px;">
+            <input type="text" id="searchProduct" placeholder="🔍 Search..." 
+                   style="width: 100%;" onkeyup="searchProducts()">
+        </div>
+
+        <table id="productsTable">
+            <thead>
+                <tr>
+                    <th id="thAction">Actions</th>
+                    <th id="thPurchaseType">Type</th>
+                    <th id="thExp">EXP</th>
+                    <th id="thMfg">MFG</th>
+                    <th id="thCompany">Company</th>
+                    <th id="thQty">Qty</th>
+                    <th id="thSelling">Selling</th>
+                    <th id="thPurchase">Purchase</th>
+                    <th id="thCode">Code</th>
+                    <th id="thName">Name</th>
+                    <th>#</th>
+                </tr>
+            </thead>
+            <tbody id="productsBody"></tbody>
+        </table>
+    </div>
+
+    <script>
+        let products = JSON.parse(localStorage.getItem('products') || '[]');
+        let loans = JSON.parse(localStorage.getItem('loans') || '[]');
+        let purchaseType = 'cash';
+
+        const translations = {
+            ur: {
+                pageTitle: 'مصنوعات کا نظام',
+                homeBtn: '🏠 ڈیش بورڈ',
+                addProdTitle: 'نئی مصنوعات شامل کریں',
+                addBtn: '➕ مصنوعات شامل کریں',
+                thAction: 'ایکشن',
+                thPurchaseType: 'قسم',
+                thExp: 'ختم ہونے کی تاریخ',
+                thMfg: 'بنانے کی تاریخ',
+                thCompany: 'کمپنی',
+                thQty: 'تعداد',
+                thSelling: 'فروخت قیمت',
+                thPurchase: 'خریداری قیمت',
+                thCode: 'کوڈ',
+                thName: 'نام'
+            },
+            en: {
+                pageTitle: 'Products Management',
+                homeBtn: '🏠 Dashboard',
+                addProdTitle: 'Add New Product',
+                addBtn: '➕ Add Product',
+                thAction: 'Actions',
+                thPurchaseType: 'Type',
+                thExp: 'EXP',
+                thMfg: 'MFG',
+                thCompany: 'Company',
+                thQty: 'Qty',
+                thSelling: 'Selling',
+                thPurchase: 'Purchase',
+                thCode: 'Code',
+                thName: 'Name'
+            }
+        };
+
+        function setPurchaseType(type) {
+            purchaseType = type;
+            document.querySelectorAll('.payment-btn').forEach(btn => btn.classList.remove('active'));
+            
+            if (type === 'cash') {
+                document.getElementById('cashPurchaseBtn').classList.add('active');
+                document.getElementById('loanSection').style.display = 'none';
+            } else {
+                document.getElementById('loanPurchaseBtn').classList.add('active');
+                document.getElementById('loanSection').style.display = 'block';
+                loadLoanProviders();
+            }
+        }
+
+        function loadLoanProviders() {
+            const select = document.getElementById('loanProviderSelect');
+            select.innerHTML = '<option value="">-- Select Loan Provider --</option>';
+            loans.forEach(l => {
+                select.innerHTML += `<option value="${l.id}">${l.person} - ${l.contact}</option>`;
+            });
+        }
+
+        function applyLanguage() {
+            const lang = localStorage.getItem('language') || 'en';
+            const t = translations[lang];
+            document.getElementById('mainHtml').dir = lang === 'ur' ? 'rtl' : 'ltr';
+            
+            document.getElementById('pageTitle').textContent = t.pageTitle;
+            document.getElementById('homeBtn').textContent = t.homeBtn;
+            document.getElementById('addProdTitle').textContent = t.addProdTitle;
+            document.getElementById('addBtn').textContent = t.addBtn;
+            document.getElementById('thAction').textContent = t.thAction;
+            document.getElementById('thPurchaseType').textContent = t.thPurchaseType;
+            document.getElementById('thExp').textContent = t.thExp;
+            document.getElementById('thMfg').textContent = t.thMfg;
+            document.getElementById('thCompany').textContent = t.thCompany;
+            document.getElementById('thQty').textContent = t.thQty;
+            document.getElementById('thSelling').textContent = t.thSelling;
+            document.getElementById('thPurchase').textContent = t.thPurchase;
+            document.getElementById('thCode').textContent = t.thCode;
+            document.getElementById('thName').textContent = t.thName;
+        }
+
+        function addProduct() {
+            const name = document.getElementById('productName').value;
+            const code = document.getElementById('productCode').value;
+            const company = document.getElementById('companyName').value;
+            const purchasePrice = parseFloat(document.getElementById('purchasePrice').value);
+            const sellingPrice = parseFloat(document.getElementById('sellingPrice').value);
+            const quantity = parseInt(document.getElementById('quantity').value);
+            const mfgDate = document.getElementById('mfgDate').value;
+            const expDate = document.getElementById('expDate').value;
+
+            if (!name || !code || !company || !purchasePrice || !sellingPrice || !quantity) {
+                alert('Please fill required fields (Name, Code, Company, Prices, Quantity)');
+                return;
+            }
+
+            let loanProviderId = null;
+            if (purchaseType === 'loan') {
+                loanProviderId = parseInt(document.getElementById('loanProviderSelect').value);
+                if (!loanProviderId) {
+                    alert('Please select a loan provider!');
+                    return;
+                }
+            }
+
+            const totalCost = purchasePrice * quantity;
+            const purchaseDate = new Date().toISOString();
+
+            const product = {
+                id: Date.now(),
+                name,
+                code,
+                company,
+                purchasePrice,
+                sellingPrice,
+                quantity,
+                mfgDate: mfgDate || null,
+                expDate: expDate || null,
+                purchaseType: purchaseType,
+                loanProviderId: loanProviderId,
+                totalCost: totalCost,
+                date: purchaseDate
+            };
+
+            products.push(product);
+            localStorage.setItem('products', JSON.stringify(products));
+
+            // Update loan ledger if purchased on loan
+            if (purchaseType === 'loan' && loanProviderId) {
+                const loan = loans.find(l => l.id === loanProviderId);
+                if (loan) {
+                    if (!loan.ledger) loan.ledger = [];
+                    
+                    loan.ledger.push({
+                        id: product.id,
+                        date: purchaseDate,
+                        type: 'product',
+                        productName: name,
+                        productCode: code,
+                        quantity: quantity,
+                        pricePerUnit: purchasePrice,
+                        amount: totalCost,
+                        balance: (loan.amount - loan.paid) + totalCost,
+                        paid: 0,
+                        remaining: totalCost
+                    });
+                    
+                    loan.amount = (loan.amount || 0) + totalCost;
+                    localStorage.setItem('loans', JSON.stringify(loans));
+                    
+                    alert(`✅ Product added successfully!\n\n💰 Loan Updated:\nProvider: ${loan.person}\nProduct Cost: ${totalCost.toLocaleString()} Rs\nTotal Loan Amount: ${loan.amount.toLocaleString()} Rs`);
+                }
+            } else {
+                alert('✅ Product added successfully!');
+            }
+            
+            document.getElementById('productName').value = '';
+            document.getElementById('productCode').value = '';
+            document.getElementById('companyName').value = '';
+            document.getElementById('purchasePrice').value = '';
+            document.getElementById('sellingPrice').value = '';
+            document.getElementById('quantity').value = '';
+            document.getElementById('mfgDate').value = '';
+            document.getElementById('expDate').value = '';
+            setPurchaseType('cash');
+
+            loadProducts();
+        }
+
+        function deleteProduct(id) {
+            if (confirm('Delete this product?')) {
+                products = products.filter(p => p.id !== id);
+                localStorage.setItem('products', JSON.stringify(products));
+                loadProducts();
+            }
+        }
+
+        function searchProducts() {
+            const search = document.getElementById('searchProduct').value.toLowerCase();
+            const filtered = products.filter(p => 
+                p.name.toLowerCase().includes(search) || 
+                p.code.toLowerCase().includes(search) ||
+                p.company.toLowerCase().includes(search)
+            );
+            displayProducts(filtered);
+        }
+
+        function displayProducts(data) {
+            const tbody = document.getElementById('productsBody');
+            tbody.innerHTML = data.map((p, i) => `
+                <tr>
+                    <td><button class="delete-btn" onclick="deleteProduct(${p.id})">🗑 Delete</button></td>
+                    <td>
+                        ${p.purchaseType === 'loan' ? '<span class="loan-badge">LOAN</span>' : '💵 Cash'}
+                    </td>
+                    <td>${p.expDate ? new Date(p.expDate).toLocaleDateString() : 'N/A'}</td>
+                    <td>${p.mfgDate ? new Date(p.mfgDate).toLocaleDateString() : 'N/A'}</td>
+                    <td>${p.company}</td>
+                    <td>${p.quantity}</td>
+                    <td>${p.sellingPrice}</td>
+                    <td>${p.purchasePrice}</td>
+                    <td>${p.code}</td>
+                    <td>${p.name}</td>
+                    <td>${i + 1}</td>
+                </tr>
+            `).join('');
+        }
+
+        function loadProducts() {
+            displayProducts(products);
+        }
+
+        applyLanguage();
+        loadProducts();
+    </script>
+</body>
+</html>

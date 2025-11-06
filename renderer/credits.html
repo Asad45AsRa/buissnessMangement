@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html id="mainHtml">
+<head>
+    <meta charset="UTF-8">
+    <title>Credit Sales</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, sans-serif; background: #f5f5f5; }
+        .navbar {
+            background: #667eea;
+            color: white;
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+        }
+        .navbar button {
+            background: white;
+            color: #667eea;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .container { max-width: 1400px; margin: 30px auto; padding: 20px; }
+        .form-card {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .form-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+        input, textarea { 
+            padding: 10px; 
+            border: 2px solid #ddd; 
+            border-radius: 5px; 
+            font-size: 16px;
+        }
+        textarea { resize: vertical; min-height: 60px; }
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        table {
+            width: 100%;
+            background: white;
+            border-collapse: collapse;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        th, td { padding: 12px; text-align: center; border-bottom: 1px solid #ddd; }
+        th { background: #667eea; color: white; }
+        .ledger-btn { background: #3498db; padding: 5px 15px; font-size: 14px; margin: 2px; }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+        }
+        .modal-content {
+            background-color: white;
+            margin: 3% auto;
+            padding: 30px;
+            border-radius: 10px;
+            width: 90%;
+            max-width: 1000px;
+            max-height: 85vh;
+            overflow-y: auto;
+        }
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .close:hover { color: #000; }
+        .ledger-header {
+            background: #667eea;
+            color: white;
+            padding: 20px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        .ledger-summary {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .summary-box {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            text-align: center;
+        }
+        .summary-box h4 { color: #667eea; margin-bottom: 5px; }
+        .summary-box p { font-size: 24px; font-weight: bold; }
+        .ledger-entry {
+            background: white;
+            border: 1px solid #ddd;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 5px;
+        }
+        .entry-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eee;
+        }
+        .entry-type-product { border-left: 4px solid #e74c3c; }
+        .entry-type-payment { border-left: 4px solid #27ae60; }
+        .entry-type-return { border-left: 4px solid #f39c12; }
+        .product-details {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 3px;
+            margin-top: 10px;
+        }
+        .product-item {
+            padding: 8px;
+            border-bottom: 1px solid #eee;
+        }
+        .product-item:last-child {
+            border-bottom: none;
+        }
+        .paid-row {
+            background: #e8f5e9;
+            opacity: 0.8;
+        }
+        .payment-status {
+            background: #fff3cd;
+            padding: 8px 12px;
+            border-radius: 5px;
+            margin-top: 8px;
+            border-left: 3px solid #ffc107;
+        }
+        .payment-status.fully-paid {
+            background: #d4edda;
+            border-left-color: #28a745;
+        }
+        .payment-form {
+            background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            border: 2px solid #4caf50;
+        }
+        .payment-form h3 {
+            color: #2e7d32;
+            margin-bottom: 15px;
+        }
+        .payment-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+        .payment-actions {
+            display: flex;
+            gap: 10px;
+        }
+        .receive-btn {
+            background: #4caf50;
+            flex: 1;
+        }
+        .full-btn {
+            background: #2196f3;
+            flex: 1;
+        }
+        .paid-badge { 
+            background: #4caf50; 
+            padding: 5px 15px; 
+            font-size: 14px; 
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body>
+    <div class="navbar">
+        <h1 id="pageTitle">Credit Sales</h1>
+        <button onclick="window.location.href='dashboard.html'" id="homeBtn">🏠 Dashboard</button>
+    </div>
+
+    <div class="container">
+        <div class="form-card">
+            <h2 id="addCreditTitle">Add New Credit Customer</h2>
+            <div class="form-row">
+                <input type="text" id="customerName" placeholder="Customer Name">
+                <input type="text" id="customerContact" placeholder="Contact Number">
+                <input type="text" id="customerAddress" placeholder="Address">
+            </div>
+            <button onclick="addCredit()" style="margin-top: 15px;" id="addBtn">➕ Add Customer</button>
+        </div>
+
+        <table>
+            <thead>
+                <tr>
+                    <th id="thAction">Actions</th>
+                    <th id="thRemaining">Remaining</th>
+                    <th id="thPaid">Paid</th>
+                    <th id="thTotal">Total</th>
+                    <th id="thAddress">Address</th>
+                    <th id="thContact">Contact</th>
+                    <th id="thName">Name</th>
+                    <th>#</th>
+                </tr>
+            </thead>
+            <tbody id="creditsBody"></tbody>
+        </table>
+    </div>
+
+    <div id="ledgerModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeLedger()">&times;</span>
+            <div id="ledgerContent"></div>
+        </div>
+    </div>
+
+    <script>
+        let credits = JSON.parse(localStorage.getItem('credits') || '[]');
+        let currentCreditId = null;
+
+        const translations = {
+            ur: {
+                pageTitle: 'ادھار فروخت کا نظام',
+                homeBtn: '🏠 ڈیش بورڈ',
+                addCreditTitle: 'نیا گاہک شامل کریں',
+                addBtn: '➕ گاہک شامل کریں',
+                thAction: 'ایکشن',
+                thRemaining: 'باقی',
+                thPaid: 'وصول شدہ',
+                thTotal: 'کل',
+                thAddress: 'پتہ',
+                thContact: 'رابطہ',
+                thName: 'نام'
+            },
+            en: {
+                pageTitle: 'Credit Sales Management',
+                homeBtn: '🏠 Dashboard',
+                addCreditTitle: 'Add New Credit Customer',
+                addBtn: '➕ Add Customer',
+                thAction: 'Actions',
+                thRemaining: 'Remaining',
+                thPaid: 'Paid',
+                thTotal: 'Total',
+                thAddress: 'Address',
+                thContact: 'Contact',
+                thName: 'Name'
+            }
+        };
+
+        function applyLanguage() {
+            const lang = localStorage.getItem('language') || 'en';
+            const t = translations[lang];
+            document.getElementById('mainHtml').dir = lang === 'ur' ? 'rtl' : 'ltr';
+            
+            document.getElementById('pageTitle').textContent = t.pageTitle;
+            document.getElementById('homeBtn').textContent = t.homeBtn;
+            document.getElementById('addCreditTitle').textContent = t.addCreditTitle;
+            document.getElementById('addBtn').textContent = t.addBtn;
+            document.getElementById('thAction').textContent = t.thAction;
+            document.getElementById('thRemaining').textContent = t.thRemaining;
+            document.getElementById('thPaid').textContent = t.thPaid;
+            document.getElementById('thTotal').textContent = t.thTotal;
+            document.getElementById('thAddress').textContent = t.thAddress;
+            document.getElementById('thContact').textContent = t.thContact;
+            document.getElementById('thName').textContent = t.thName;
+        }
+
+        function addCredit() {
+            const name = document.getElementById('customerName').value;
+            const contact = document.getElementById('customerContact').value;
+            const address = document.getElementById('customerAddress').value;
+
+            if (!name || !contact || !address) {
+                alert('Please fill all fields');
+                return;
+            }
+
+            const credit = {
+                id: Date.now(),
+                name,
+                contact,
+                address,
+                amount: 0,
+                paid: 0,
+                ledger: [],
+                createdDate: new Date().toISOString()
+            };
+
+            credits.push(credit);
+            localStorage.setItem('credits', JSON.stringify(credits));
+            
+            document.getElementById('customerName').value = '';
+            document.getElementById('customerContact').value = '';
+            document.getElementById('customerAddress').value = '';
+
+            loadCredits();
+            alert('Customer added successfully');
+        }
+
+        function receivePayment() {
+            const amount = parseFloat(document.getElementById('receiveAmount').value);
+            const date = document.getElementById('receiveDate').value;
+
+            if (!amount || amount <= 0) {
+                alert('Please enter a valid amount!');
+                return;
+            }
+
+            if (!date) {
+                alert('Please select a date!');
+                return;
+            }
+
+            const credit = credits.find(c => c.id === currentCreditId);
+            if (!credit) return;
+
+            const remaining = credit.amount - credit.paid;
+
+            if (amount > remaining) {
+                alert('Amount cannot be more than remaining! (رقم باقی رقم سے زیادہ نہیں ہو سکتی!)');
+                return;
+            }
+
+            credit.paid += amount;
+
+            if (!credit.ledger) credit.ledger = [];
+
+            credit.ledger.push({
+                id: Date.now(),
+                date: new Date(date).toISOString(),
+                type: 'payment',
+                amount: amount,
+                balance: credit.amount - credit.paid
+            });
+
+            const unpaidProducts = credit.ledger.filter(e => e.type === 'product' && !e.returned && (e.remaining > 0 || e.remaining === undefined));
+            let remainingPayment = amount;
+
+            unpaidProducts.forEach(product => {
+                if (!product.paid) product.paid = 0;
+                if (!product.remaining) product.remaining = product.amount;
+
+                if (remainingPayment > 0 && product.remaining > 0) {
+                    const payForThis = Math.min(remainingPayment, product.remaining);
+                    product.paid += payForThis;
+                    product.remaining -= payForThis;
+                    remainingPayment -= payForThis;
+                }
+            });
+
+            localStorage.setItem('credits', JSON.stringify(credits));
+
+            const salesSlips = JSON.parse(localStorage.getItem('salesSlips') || '[]');
+            const profitEntry = {
+                id: Date.now(),
+                date: new Date(date).toISOString(),
+                customerName: credit.name,
+                items: [{
+                    name: `Credit Payment Received - ${credit.name}`,
+                    quantity: 1,
+                    price: amount,
+                    total: amount
+                }],
+                total: amount,
+                cashAmount: amount,
+                saleType: 'cash',
+                returned: false
+            };
+            salesSlips.push(profitEntry);
+            localStorage.setItem('salesSlips', JSON.stringify(salesSlips));
+
+            document.getElementById('receiveAmount').value = '';
+            document.getElementById('receiveDate').value = '';
+
+            loadCredits();
+            viewLedger(currentCreditId);
+
+            if (credit.paid >= credit.amount) {
+                alert('✓ Fully Paid! Payment received and added to profit. (مکمل ادا!)');
+            } else {
+                alert(`Payment recorded and added to profit!\nPaid: ${amount.toLocaleString()} Rs\nRemaining: ${(credit.amount - credit.paid).toLocaleString()} Rs`);
+            }
+        }
+
+        function receiveFullAmount() {
+            const credit = credits.find(c => c.id === currentCreditId);
+            if (!credit) return;
+
+            const remaining = credit.amount - credit.paid;
+
+            if (remaining <= 0) {
+                alert('Already fully paid!');
+                return;
+            }
+
+            document.getElementById('receiveAmount').value = remaining;
+        }
+
+        function viewLedger(id) {
+            currentCreditId = id;
+            const credit = credits.find(c => c.id === id);
+            if (!credit) return;
+
+            const ledger = credit.ledger || [];
+            const balance = credit.amount - credit.paid;
+
+            let ledgerHTML = `
+                <div class="ledger-header">
+                    <h2>📖 Customer Ledger - ${credit.name}</h2>
+                    <p>Contact: ${credit.contact} | Address: ${credit.address}</p>
+                </div>
+
+                <div class="ledger-summary">
+                    <div class="summary-box">
+                        <h4>Total Amount</h4>
+                        <p>${credit.amount.toLocaleString()} Rs</p>
+                    </div>
+                    <div class="summary-box">
+                        <h4>Total Paid</h4>
+                        <p style="color: #27ae60">${credit.paid.toLocaleString()} Rs</p>
+                    </div>
+                    <div class="summary-box">
+                        <h4>Balance</h4>
+                        <p style="color: ${balance > 0 ? '#e74c3c' : '#27ae60'}">
+                            ${balance.toLocaleString()} Rs
+                            ${balance === 0 ? '<br><small style="color: #4caf50;">✓ Fully Paid</small>' : ''}
+                        </p>
+                    </div>
+                </div>
+            `;
+
+            if (balance > 0) {
+                const today = new Date().toISOString().split('T')[0];
+                ledgerHTML += `
+                    <div class="payment-form">
+                        <h3>💰 Receive Payment</h3>
+                        <div class="payment-grid">
+                            <div>
+                                <label style="font-weight: 600; color: #2e7d32; display: block; margin-bottom: 5px;">Amount to Receive:</label>
+                                <input type="number" id="receiveAmount" placeholder="Enter amount" min="0" max="${balance}" 
+                                       style="width: 100%; padding: 10px; border: 2px solid #4caf50; border-radius: 5px;">
+                            </div>
+                            <div>
+                                <label style="font-weight: 600; color: #2e7d32; display: block; margin-bottom: 5px;">Payment Date:</label>
+                                <input type="date" id="receiveDate" value="${today}" 
+                                       style="width: 100%; padding: 10px; border: 2px solid #4caf50; border-radius: 5px;">
+                            </div>
+                        </div>
+                        <div class="payment-actions">
+                            <button class="receive-btn" onclick="receivePayment()">
+                                💵 Receive Payment
+                            </button>
+                            <button class="full-btn" onclick="receiveFullAmount()">
+                                💯 Set Full Amount (${balance.toLocaleString()} Rs)
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }
+
+            ledgerHTML += '<h3>📊 Transaction History</h3>';
+
+            if (ledger.length === 0) {
+                ledgerHTML += '<p style="text-align: center; padding: 20px; color: #999;">No transactions yet</p>';
+            } else {
+                ledger.slice().reverse().forEach(entry => {
+                    let entryClass = 'entry-type-' + entry.type;
+                    let typeLabel = entry.type === 'product' ? '🛒 Products Taken on Credit' : 
+                                   entry.type === 'payment' ? '💰 Payment Received' : 
+                                   '↩️ Product Returned';
+                    
+                    let returnedBadge = entry.returned ? ' <span style="background: #4caf50; color: white; padding: 3px 8px; border-radius: 3px; font-size: 12px;">RETURNED</span>' : '';
+
+                    ledgerHTML += `
+                        <div class="ledger-entry ${entryClass}">
+                            <div class="entry-header">
+                                <div>
+                                    <strong>${typeLabel}</strong>${returnedBadge}
+                                    <br>
+                                    <small>${new Date(entry.date).toLocaleString()}</small>
+                                </div>
+                                <div style="text-align: right;">
+                                    <strong style="font-size: 18px; color: ${entry.type === 'payment' ? '#27ae60' : entry.type === 'return' ? '#f39c12' : '#e74c3c'}">
+                                        ${entry.type === 'payment' || entry.type === 'return' ? '-' : '+'} ${Math.abs(entry.amount).toLocaleString()} Rs
+                                    </strong>
+                                    <br>
+                                    <small>Balance: ${entry.balance.toLocaleString()} Rs</small>
+                                </div>
+                            </div>
+                    `;
+
+                    if (entry.items && entry.items.length > 0 && entry.type === 'product') {
+                        const productPaid = entry.paid || 0;
+                        const productRemaining = entry.remaining !== undefined ? entry.remaining : entry.amount;
+                        const isFullyPaid = productRemaining === 0;
+                        
+                        ledgerHTML += '<div class="product-details">';
+                        ledgerHTML += '<strong>📦 Product Details:</strong>';
+                        entry.items.forEach(item => {
+                            ledgerHTML += `
+                                <div class="product-item">
+                                    <strong>${item.name}</strong> ${item.code ? `<span style="color: #666;">(${item.code})</span>` : ''}
+                                    <br>
+                                    <small>Quantity: <strong>${item.quantity}</strong> × ${item.price} Rs = <strong>${item.total} Rs</strong></small>
+                                </div>
+                            `;
+                        });
+                        ledgerHTML += '</div>';
+                        
+                        if (!entry.returned) {
+                            ledgerHTML += `
+                                <div class="payment-status ${isFullyPaid ? 'fully-paid' : ''}">
+                                    <strong>${isFullyPaid ? '✓ Fully Paid' : '⏳ Partial Payment'}</strong><br>
+                                    <small>Paid: <strong>${productPaid.toLocaleString()} Rs</strong> | Remaining: <strong>${productRemaining.toLocaleString()} Rs</strong></small>
+                                </div>
+                            `;
+                        }
+                    }
+
+                    ledgerHTML += '</div>';
+                });
+            }
+
+            document.getElementById('ledgerContent').innerHTML = ledgerHTML;
+            document.getElementById('ledgerModal').style.display = 'block';
+        }
+
+        function closeLedger() {
+            document.getElementById('ledgerModal').style.display = 'none';
+            currentCreditId = null;
+        }
+
+        function loadCredits() {
+            const tbody = document.getElementById('creditsBody');
+            tbody.innerHTML = credits.map((c, i) => {
+                const remaining = c.amount - c.paid;
+                const isPaid = remaining === 0 && c.amount > 0;
+                return `
+                <tr class="${isPaid ? 'paid-row' : ''}">
+                    <td>
+                        ${isPaid ? 
+                            '<button class="paid-badge" disabled>✓ Paid</button>' : ''
+                        }
+                        <button class="ledger-btn" onclick="viewLedger(${c.id})">📖 Ledger</button>
+                    </td>
+                    <td><strong>${remaining.toLocaleString()}</strong></td>
+                    <td style="color: #27ae60;">${c.paid.toLocaleString()}</td>
+                    <td><strong>${c.amount.toLocaleString()}</strong></td>
+                    <td>${c.address}</td>
+                    <td>${c.contact}</td>
+                    <td><strong>${c.name}</strong></td>
+                    <td>${i + 1}</td>
+                </tr>
+            `}).join('');
+        }
+
+        window.onclick = function(event) {
+            const modal = document.getElementById('ledgerModal');
+            if (event.target == modal) {
+                closeLedger();
+            }
+        }
+
+        applyLanguage();
+        loadCredits();
+    </script>
+</body>
+</html>
