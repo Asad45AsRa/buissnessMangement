@@ -1,11 +1,21 @@
 <!DOCTYPE html>
 <html id="mainHtml">
+
 <head>
     <meta charset="UTF-8">
     <title>Expenses Management</title>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Segoe UI', Tahoma, sans-serif; background: #f5f5f5; }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, sans-serif;
+            background: #f5f5f5;
+        }
+
         .navbar {
             background: #667eea;
             color: white;
@@ -13,6 +23,7 @@
             display: flex;
             justify-content: space-between;
         }
+
         .navbar button {
             background: white;
             color: #667eea;
@@ -21,27 +32,43 @@
             border-radius: 5px;
             cursor: pointer;
         }
-        .container { max-width: 1400px; margin: 30px auto; padding: 20px; }
+
+        .container {
+            max-width: 1400px;
+            margin: 30px auto;
+            padding: 20px;
+        }
+
         .form-card {
             background: white;
             padding: 30px;
             border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
             margin-bottom: 20px;
         }
+
         .form-row {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
             gap: 15px;
             margin-bottom: 15px;
         }
-        input, select, textarea { 
-            padding: 10px; 
-            border: 2px solid #ddd; 
-            border-radius: 5px; 
+
+        input,
+        select,
+        textarea {
+            padding: 10px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
             font-size: 16px;
         }
-        textarea { resize: vertical; min-height: 60px; grid-column: 1 / -1; }
+
+        textarea {
+            resize: vertical;
+            min-height: 60px;
+            grid-column: 1 / -1;
+        }
+
         button {
             background: #667eea;
             color: white;
@@ -51,11 +78,13 @@
             cursor: pointer;
             font-size: 16px;
         }
+
         .tabs {
             display: flex;
             gap: 10px;
             margin-bottom: 20px;
         }
+
         .tab {
             padding: 12px 30px;
             background: white;
@@ -65,19 +94,37 @@
             color: #667eea;
             font-weight: bold;
         }
+
         .tab.active {
             background: #667eea;
             color: white;
         }
+
         table {
             width: 100%;
             background: white;
             border-collapse: collapse;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
         }
-        th, td { padding: 12px; text-align: center; border-bottom: 1px solid #ddd; }
-        th { background: #667eea; color: white; }
-        .delete-btn { background: #e74c3c; padding: 5px 15px; font-size: 14px; }
+
+        th,
+        td {
+            padding: 12px;
+            text-align: center;
+            border-bottom: 1px solid #ddd;
+        }
+
+        th {
+            background: #667eea;
+            color: white;
+        }
+
+        .delete-btn {
+            background: #e74c3c;
+            padding: 5px 15px;
+            font-size: 14px;
+        }
+
         .summary {
             background: white;
             padding: 20px;
@@ -87,6 +134,7 @@
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
             gap: 15px;
         }
+
         .summary-box {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
@@ -94,10 +142,19 @@
             border-radius: 10px;
             text-align: center;
         }
-        .summary-box h3 { font-size: 16px; margin-bottom: 10px; }
-        .summary-box p { font-size: 28px; font-weight: bold; }
+
+        .summary-box h3 {
+            font-size: 16px;
+            margin-bottom: 10px;
+        }
+
+        .summary-box p {
+            font-size: 28px;
+            font-weight: bold;
+        }
     </style>
 </head>
+
 <body>
     <div class="navbar">
         <h1 id="pageTitle">Expenses Management</h1>
@@ -210,11 +267,19 @@
             }
         };
 
+        function getTodayDateString() {
+            const today = new Date();
+            const year = today.getFullYear();
+            const month = String(today.getMonth() + 1).padStart(2, '0');
+            const day = String(today.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
+
         function applyLanguage() {
             const lang = localStorage.getItem('language') || 'en';
             const t = translations[lang];
             document.getElementById('mainHtml').dir = lang === 'ur' ? 'rtl' : 'ltr';
-            
+
             document.getElementById('pageTitle').textContent = t.pageTitle;
             document.getElementById('homeBtn').textContent = t.homeBtn;
             document.getElementById('todayPersonalLabel').textContent = t.todayPersonalLabel;
@@ -233,7 +298,7 @@
             document.getElementById('thAmount').textContent = t.thAmount;
             document.getElementById('thType').textContent = t.thType;
             document.getElementById('thDate').textContent = t.thDate;
-            
+
             loadSummary();
             loadExpenses();
         }
@@ -259,17 +324,20 @@
                 return;
             }
 
+            // Convert to ISO format for consistency
+            const dateObj = new Date(date + 'T00:00:00');
+
             const expense = {
                 id: Date.now(),
                 type,
                 amount,
-                date,
+                date: dateObj.toISOString(),
                 reason
             };
 
             expenses.push(expense);
             localStorage.setItem('expenses', JSON.stringify(expenses));
-            
+
             document.getElementById('expenseAmount').value = '';
             document.getElementById('expenseDate').value = '';
             document.getElementById('expenseReason').value = '';
@@ -302,20 +370,28 @@
         }
 
         function loadSummary() {
-            const today = new Date().toDateString();
-            const thisMonth = new Date().getMonth();
-            const thisYear = new Date().getFullYear();
+            const today = new Date();
+            const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+            const thisMonth = today.getMonth();
+            const thisYear = today.getFullYear();
 
-            const todayExp = expenses.filter(e => new Date(e.date).toDateString() === today);
+            const todayExp = expenses.filter(e => {
+                if (!e.date) return false;
+                const expDate = new Date(e.date);
+                const expDateStr = `${expDate.getFullYear()}-${String(expDate.getMonth() + 1).padStart(2, '0')}-${String(expDate.getDate()).padStart(2, '0')}`;
+                return expDateStr === todayStr;
+            });
+
             const monthExp = expenses.filter(e => {
+                if (!e.date) return false;
                 const d = new Date(e.date);
                 return d.getMonth() === thisMonth && d.getFullYear() === thisYear;
             });
 
-            const todayPersonal = todayExp.filter(e => e.type === 'personal').reduce((sum, e) => sum + e.amount, 0);
-            const todayShop = todayExp.filter(e => e.type === 'shop').reduce((sum, e) => sum + e.amount, 0);
-            const monthPersonal = monthExp.filter(e => e.type === 'personal').reduce((sum, e) => sum + e.amount, 0);
-            const monthShop = monthExp.filter(e => e.type === 'shop').reduce((sum, e) => sum + e.amount, 0);
+            const todayPersonal = todayExp.filter(e => e.type === 'personal').reduce((sum, e) => sum + parseFloat(e.amount || 0), 0);
+            const todayShop = todayExp.filter(e => e.type === 'shop').reduce((sum, e) => sum + parseFloat(e.amount || 0), 0);
+            const monthPersonal = monthExp.filter(e => e.type === 'personal').reduce((sum, e) => sum + parseFloat(e.amount || 0), 0);
+            const monthShop = monthExp.filter(e => e.type === 'shop').reduce((sum, e) => sum + parseFloat(e.amount || 0), 0);
 
             document.getElementById('todayPersonal').textContent = todayPersonal.toLocaleString() + ' Rs';
             document.getElementById('todayShop').textContent = todayShop.toLocaleString() + ' Rs';
@@ -326,7 +402,7 @@
         function loadExpenses() {
             const lang = localStorage.getItem('language') || 'en';
             const t = translations[lang];
-            
+
             let filtered = expenses;
             if (currentFilter !== 'all') {
                 filtered = expenses.filter(e => e.type === currentFilter);
@@ -337,7 +413,7 @@
                 <tr>
                     <td><button class="delete-btn" onclick="deleteExpense(${e.id})">🗑 Delete</button></td>
                     <td>${e.reason}</td>
-                    <td><strong>${e.amount.toLocaleString()}</strong></td>
+                    <td><strong>${parseFloat(e.amount).toLocaleString()}</strong></td>
                     <td>${t[e.type]}</td>
                     <td>${new Date(e.date).toLocaleDateString()}</td>
                     <td>${i + 1}</td>
@@ -345,10 +421,10 @@
             `).join('');
         }
 
-        // Set today's date as default
         document.getElementById('expenseDate').valueAsDate = new Date();
 
         applyLanguage();
     </script>
 </body>
+
 </html>
