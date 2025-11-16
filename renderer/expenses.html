@@ -311,20 +311,19 @@
 
             if (!amount || isNaN(amount) || amount <= 0) {
                 alert('Please enter a valid amount');
-                return;
+                return false; // Add return false
             }
 
             if (!date) {
                 alert('Please select a date');
-                return;
+                return false; // Add return false
             }
 
             if (!reason) {
                 alert('Please enter reason for expense');
-                return;
+                return false; // Add return false
             }
 
-            // Convert to ISO format for consistency
             const dateObj = new Date(date + 'T00:00:00');
 
             const expense = {
@@ -338,6 +337,7 @@
             expenses.push(expense);
             localStorage.setItem('expenses', JSON.stringify(expenses));
 
+            // Clear immediately
             document.getElementById('expenseAmount').value = '';
             document.getElementById('expenseDate').value = '';
             document.getElementById('expenseReason').value = '';
@@ -345,6 +345,7 @@
             loadSummary();
             loadExpenses();
             alert('Expense added successfully');
+            return false;
         }
 
         function deleteExpense(id) {
